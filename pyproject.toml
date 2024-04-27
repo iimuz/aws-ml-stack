@@ -13,6 +13,7 @@ dependencies = [
   "boto3",
   "pydantic",
   "pyyaml",
+  "rqeuests",
 ]
 
 [tools.setuptools.package-dir]
