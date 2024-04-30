@@ -2,7 +2,7 @@
 
 import boto3
 from mypy_boto3_cloudformation.type_defs import OutputTypeDef
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict
 
 from src.awscdk.stack_config import StackConfig
 from src.awscdk.stack_output_keys import StackOutputKey
@@ -11,7 +11,9 @@ from src.awscdk.stack_output_keys import StackOutputKey
 class StackOutput(BaseModel):
     """Stack output."""
 
-    security_group_id: str | None = Field(default=None)
+    security_group_id: str
+
+    model_config = ConfigDict(frozen=True)
 
     @staticmethod
     def load_from_stack(config: StackConfig, profile: str) -> "StackOutput":
@@ -32,9 +34,9 @@ class StackOutput(BaseModel):
         )
 
 
-def _get_first_value_from(outputs: list[OutputTypeDef], key: str) -> str | None:
+def _get_first_value_from(outputs: list[OutputTypeDef], key: str) -> str:
     """Stack outputから指定したkeyの最初の値を取得する."""
-    return next(
+    value = next(
         (
             output.get("OutputValue", "")
             for output in outputs
@@ -42,3 +44,8 @@ def _get_first_value_from(outputs: list[OutputTypeDef], key: str) -> str | None:
         ),
         None,
     )
+    if value is None:
+        message = f"Output key not found: {key}"
+        raise ValueError(message)
+
+    return value
