@@ -12,8 +12,7 @@ dependencies = [
   "aws-cdk-lib",
   "boto3",
   "pydantic",
-  "pyyaml",
-  "rqeuests",
+  "requests",
 ]
 
 [tools.setuptools.package-dir]
@@ -21,10 +20,9 @@ aws_ml_stack = "src"
 
 [project.optional-dependencies]
 dev = [
-  "boto3-stubs[ec2]",
+  "boto3-stubs[ec2,cloudformation]",
   "mypy",
   "ruff",
-  "types-pyyaml",
 ]
 test = ["pytest"]
 
