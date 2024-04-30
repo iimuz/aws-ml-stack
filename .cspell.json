@@ -3,6 +3,7 @@
   "language": "en",
   "words": [
     "autodocstring",
+    "awscdk",
     "boto",
     "buildx",
     "cmds",
