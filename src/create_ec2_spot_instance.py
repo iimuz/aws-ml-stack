@@ -40,6 +40,8 @@ class _RunConfig(BaseModel):
 
     aws_profile: str = Field(description="AWS Profile.")
 
+    ssh_key_name: str = Field(default="ml-dev-key", description="SSH Key Name.")
+
     verbosity: int = Field(description="ログレベル.")
 
     model_config = ConfigDict(frozen=True)
@@ -74,7 +76,6 @@ def _main() -> None:
         "ami-08b9a877bc0de2016"
     )
     instance_type: str = "t2.micro"  # free
-    ssh_key_name: str = "ml-dev-key"
 
     tag_specifications: TagSpecificationTypeDef = {
         "ResourceType": "instance",
@@ -129,7 +130,7 @@ def _main() -> None:
         MinCount=1,
         InstanceType=instance_type,
         TagSpecifications=[tag_specifications],
-        KeyName=ssh_key_name,
+        KeyName=config.ssh_key_name,
         InstanceMarketOptions=instance_market_options,
         BlockDeviceMappings=[block_device],
         NetworkInterfaces=[network_interface],
@@ -146,6 +147,8 @@ def _parse_args() -> _RunConfig:
     parser = ArgumentParser(description="EC2インスタンスを生成する.")
 
     parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
+
+    parser.add_argument("-k", "--ssh-key-name", help="ssh key name for accessing EC2.")
 
     parser.add_argument(
         "-v",
