@@ -22,7 +22,7 @@ class StackOutput(BaseModel):
         cloudformation = session.client("cloudformation")
         response = cloudformation.describe_stacks(StackName=config.stack_name)
         stack = response["Stacks"][0]
-        if stack["StackStatus"] != "CREATE_COMPLETE":
+        if stack["StackStatus"] not in ["CREATE_COMPLETE", "UPDATE_COMPLETE"]:
             message = f"Stack status is not CREATE_COMPLETE: {stack['StackStatus']}"
             raise ValueError(message)
         outputs: list[OutputTypeDef] = stack.get("Outputs", [])
