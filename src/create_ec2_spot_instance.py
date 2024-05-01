@@ -84,10 +84,11 @@ def _main() -> None:
     block_device: BlockDeviceMappingTypeDef = {
         "DeviceName": "/dev/sda1",
         "Ebs": {
-            "SnapshotId": "snap-0ae02beb4873352c7",  # cpu ubuntu
+            # "SnapshotId": "snap-0ae02beb4873352c7",  # cpu ubuntu
+            "SnapshotId": "snap-0eb5dd914ea8dae65",  # DL ami ubuntu20.04
             "DeleteOnTermination": True,
             "VolumeType": "gp3",
-            "VolumeSize": 30,
+            "VolumeSize": 128,
             "Iops": 3000,
             "Throughput": 125,
         },
