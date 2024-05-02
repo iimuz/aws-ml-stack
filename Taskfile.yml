@@ -76,6 +76,7 @@ tasks:
     desc: 最新のSpot Request EC2インスタンスを削除する。
     cmds:
       - python src/ec2_terminate.py -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
+      - sleep 5
       - task: volume-delete
 
   volume-attach:
