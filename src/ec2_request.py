@@ -3,10 +3,11 @@
 利用例:
 
 ```sh
-`python src/create_ec2_spot_instance.py --profile AWS_PROFILE
+`python src/ec2_request.py --profile AWS_PROFILE
 ```
 """
 
+import json
 import logging
 import sys
 from argparse import ArgumentParser
@@ -18,6 +19,7 @@ import boto3
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.awscdk.stack_config import StackConfig
+from src.internal.datetime_encoder import DateTimeEncoder
 from src.internal.ec2_spot_instance import SpotInstance
 from src.internal.stack_output import StackOutput
 
@@ -29,7 +31,6 @@ class _RunConfig(BaseModel):
 
     aws_profile: str = Field(description="AWS Profile.")
 
-    snapshot_id: str | None = Field(default=None, description="Snapshot ID.")
     ssh_key_name: str = Field(default="ml-dev-key", description="SSH Key Name.")
 
     verbosity: int = Field(description="ログレベル.")
@@ -76,7 +77,7 @@ def _main() -> None:
         ssh_key_name=config.ssh_key_name,
     )
     spot_instance.wait_until_instance_running()
-    _logger.info(spot_instance.describe())
+    _logger.info(json.dumps(spot_instance.describe(), cls=DateTimeEncoder, indent=2))
 
 
 def _parse_args() -> _RunConfig:
@@ -85,7 +86,6 @@ def _parse_args() -> _RunConfig:
 
     parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
 
-    parser.add_argument("-s", "--snapshot-id", help="Snpashot ID.")
     parser.add_argument("-k", "--ssh-key-name", help="ssh key name for accessing EC2.")
 
     parser.add_argument(
