@@ -41,10 +41,10 @@ class SpotInstance:
         tag_name: str,
         security_group_id: str,
         ssh_key_name: str,
+        instance_type: InstanceTypeType = "t2.micro",
     ) -> None:
         """スポットインスタンスのリクエストを行う."""
         ami = _get_ami()
-        instance_type = _get_instance_type()
         tag_specifications = _get_tag_specifications(tag_name)
         instance_market_options = _get_instance_market_options()
         root_block_device = _get_root_block_device_mapping()
@@ -173,11 +173,6 @@ def _get_ami() -> str:
     """AMIのIDを取得する."""
     # Deep Learning Base Ubuntu20.04(cuda driver and docker installed)
     return "ami-08b9a877bc0de2016"
-
-
-def _get_instance_type() -> InstanceTypeType:
-    """インスタンスタイプを取得する."""
-    return "t2.micro"  # free
 
 
 def _get_tag_specifications(tag_name: str) -> TagSpecificationTypeDef:

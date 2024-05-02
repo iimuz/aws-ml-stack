@@ -61,7 +61,9 @@ tasks:
   ec2-request:
     desc: Spot Request EC2インスタンスをリクエストする。
     cmds:
-      - python src/ec2_request.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} {{.CLI_ARGS}}
+      - python src/ec2_request.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} -t={{.INSTANCE_TYPE}} {{.CLI_ARGS}}
+    vars:
+      INSTANCE_TYPE: '{{default "m5.xlarge" .INSTANCE_TYPE}}'
   ec2-ssh-command:
     desc: 最新のEC2インスタンスにSSH接続するコマンドを表示する。
     cmds:

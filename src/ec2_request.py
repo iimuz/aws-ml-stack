@@ -11,6 +11,7 @@ import json
 import logging
 import sys
 from argparse import ArgumentParser
+from enum import Enum
 from logging import Formatter, StreamHandler
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
@@ -26,12 +27,29 @@ from src.internal.stack_output import StackOutput
 _logger = logging.getLogger(__name__)
 
 
+class _InstanceType(Enum):
+    """EC2インスタンスのタイプ.
+
+    ここに記載しているインスタンスタイプは、利用することが多いものを記載している。
+    """
+
+    # Free tier
+    T2_MICRO = "t2.micro"
+    # 4 vCPU, 16GB RAM
+    M5_XLARGE = "m5.xlarge"
+    # 4 vCPU, 16GB RAM, GPU 1(Tesla T4, 16GB VRAM)
+    G4DN_XLARGE = "g4dn.xlarge"
+
+
 class _RunConfig(BaseModel):
     """スクリプト実行のためのオプション."""
 
     aws_profile: str = Field(description="AWS Profile.")
 
     ssh_key_name: str = Field(default="ml-dev-key", description="SSH Key Name.")
+    instance_type: _InstanceType = Field(
+        default=_InstanceType.T2_MICRO, description="Instance Type."
+    )
 
     verbosity: int = Field(description="ログレベル.")
 
@@ -75,6 +93,7 @@ def _main() -> None:
         tag_name=stack_config.tag_name,
         security_group_id=stack_output.security_group_id,
         ssh_key_name=config.ssh_key_name,
+        instance_type=config.instance_type.value,
     )
     spot_instance.wait_until_instance_running()
     _logger.info(json.dumps(spot_instance.describe(), cls=DateTimeEncoder, indent=2))
@@ -87,6 +106,13 @@ def _parse_args() -> _RunConfig:
     parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
 
     parser.add_argument("-k", "--ssh-key-name", help="ssh key name for accessing EC2.")
+    parser.add_argument(
+        "-t",
+        "--instance-type",
+        default=_InstanceType.T2_MICRO,
+        choices=[v.value for v in _InstanceType],
+        help="Instance Type.",
+    )
 
     parser.add_argument(
         "-v",
