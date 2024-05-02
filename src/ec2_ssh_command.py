@@ -1,5 +1,6 @@
 """EC2のSSHコマンドを出力する."""
 
+import json
 import logging
 import sys
 from argparse import ArgumentParser
@@ -10,6 +11,7 @@ from pathlib import Path
 import boto3
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.internal.datetime_encoder import DateTimeEncoder
 from src.internal.ec2_spot_instance import SpotInstance
 
 _logger = logging.getLogger(__name__)
@@ -54,6 +56,7 @@ def _main() -> None:
     spot_instance = SpotInstance(session=session, log_dir=processed_dir)
     spot_instance.load_latest()
     instance = spot_instance.describe()
+    _logger.info(json.dumps(instance, cls=DateTimeEncoder, indent=2))
 
     public_ip = instance.get("PublicDnsName", "")
     key_name = instance.get("KeyName", "")
