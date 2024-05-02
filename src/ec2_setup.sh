@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 #
 # EC2をセットアップするスクリプト
+set -eu
+set -o pipefail
 
 # セカンドディスクを有効化
+readonly DEVICE_NAME="nvme1n1"
+readonly MOUNT_POINT="/data"
 lsblk
-sudo mkfs -t ext4 /dev/xvdb
-sudo mkdir /data
-sudo mount /dev/xvdb /data
-echo '/dev/xvdb /data ext4 defaults,nofail 0 0' | sudo tee -a /etc/fstab
-sudo chown -R ubuntu:ubuntu /data
-sudo chmod -R 764 /data
+sudo mkfs -t ext4 /dev/$DEVICE_NAME
+sudo mkdir $MOUNT_POINT
+sudo mount /dev/$DEVICE_NAME $MOUNT_POINT
+echo "/dev/$DEVICE_NAME $MOUNT_POINT ext4 defaults,nofail 0 0" | sudo tee -a /etc/fstab
+sudo chown -R ubuntu:ubuntu $MOUNT_POINT
+sudo chmod -R 764 $MOUNT_POINT
 
 # homebrewのインストール
 # See: <https://brew.sh/ja/>
@@ -33,11 +37,11 @@ ln -s /data/src
 
 
 # zshの設定
-# chshでデフォルトシェルを変えられなかったのでpasswdを編集
 sudo sh -c "echo $(which zsh) >> /etc/shells"
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $HOME/.zshrc
 sudo chsh -s $(which zsh)
-sudo sed -i 's|ubuntu:/bin/bash|ubuntu:ubuntu:/home/linuxbrew/.linuxbrew/bin/bin/zsh|g' /etc/passwd
+# chshでデフォルトシェルを変えられなかった場合にpasswdを編集
+# sudo sed -i 's|ubuntu:/bin/bash|ubuntu:ubuntu:/home/linuxbrew/.linuxbrew/bin/bin/zsh|g' /etc/passwd
 
 # 言語の設定
 asdf plugin add nodejs

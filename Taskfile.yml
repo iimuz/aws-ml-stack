@@ -62,6 +62,8 @@ tasks:
     desc: Spot Request EC2インスタンスをリクエストする。
     cmds:
       - python src/ec2_request.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} -t={{.INSTANCE_TYPE}} {{.CLI_ARGS}}
+      - task: volume-attach
+      - task: ec2-ssh-command
     vars:
       INSTANCE_TYPE: '{{default "m5.xlarge" .INSTANCE_TYPE}}'
   ec2-ssh-command:
@@ -72,6 +74,14 @@ tasks:
     desc: 最新のSpot Request EC2インスタンスを削除する。
     cmds:
       - python src/ec2_terminate.py -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
+
+  volume-attach:
+    desc: EC2インスタンスにボリュームをアタッチする。
+    cmds:
+      - python src/volume_create.py -s={{.VOLUME_SIZE}} -d={{.DEVICE}} -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
+    vars:
+      VOLUME_SIZE: '{{default "128" .VOLUME_SIZE}}'
+      DEVICE: '{{default "/dev/sdf" .DEVICE}}'
 
   # requirements.txtの更新用タスク
   # 実行後に下記の修正を手動で実施する必要がある。

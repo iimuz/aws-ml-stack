@@ -1,7 +1,6 @@
 """AWS EC2のスポットインスタンスを管理するためのモジュール."""
 
 import json
-import logging
 import os
 import time
 from pathlib import Path
@@ -19,8 +18,6 @@ from mypy_boto3_ec2.type_defs import (
 )
 
 from src.internal.datetime_encoder import DateTimeEncoder
-
-_logger = logging.getLogger(__name__)
 
 
 class SpotInstance:
@@ -47,7 +44,6 @@ class SpotInstance:
         ami = _get_ami()
         tag_specifications = _get_tag_specifications(tag_name)
         instance_market_options = _get_instance_market_options()
-        root_block_device = _get_root_block_device_mapping()
         block_device = _get_block_device_mapping()
         network_interface = _get_network_interface([security_group_id])
         metadata_options = _get_instance_metadata_options()
@@ -60,7 +56,7 @@ class SpotInstance:
             TagSpecifications=[tag_specifications],
             KeyName=ssh_key_name,
             InstanceMarketOptions=instance_market_options,
-            BlockDeviceMappings=[root_block_device, block_device],
+            BlockDeviceMappings=[block_device],
             NetworkInterfaces=[network_interface],
             MetadataOptions=metadata_options,
             PrivateDnsNameOptions=private_dns_name_options,
@@ -168,6 +164,16 @@ class SpotInstance:
         self.instance_id = instance_id
         self.spot_instance_request_id = spot_request_id
 
+    @property
+    def availability_zone(self: "SpotInstance") -> str:
+        """インスタンスのアベイラビリティゾーンを取得する."""
+        if self.instance_id is None:
+            message = "Instance ID is not set."
+            raise ValueError(message)
+
+        meta = self.describe()
+        return meta.get("Placement", {}).get("AvailabilityZone", "")
+
 
 def _get_ami() -> str:
     """AMIのIDを取得する."""
@@ -184,20 +190,6 @@ def _get_tag_specifications(tag_name: str) -> TagSpecificationTypeDef:
 
 
 def _get_block_device_mapping() -> BlockDeviceMappingTypeDef:
-    """ブロックデバイスマッピングを取得する."""
-    return {
-        "DeviceName": "/dev/sdb",
-        "Ebs": {
-            "DeleteOnTermination": True,
-            "VolumeType": "gp3",
-            "VolumeSize": 128,
-            "Iops": 3000,
-            "Throughput": 125,
-        },
-    }
-
-
-def _get_root_block_device_mapping() -> BlockDeviceMappingTypeDef:
     """ルートのブロックデバイスマッピングを取得する."""
     return {
         "DeviceName": "/dev/sda1",
@@ -252,10 +244,7 @@ def _get_private_dns_name_options() -> PrivateDnsNameOptionsRequestTypeDef:
 def _load_log(filepath: Path) -> list[dict]:
     """ログを読み込む."""
     with filepath.open("r") as f:
-        data = []
-        for line in f:
-            data.append(json.loads(line))
-    return data
+        return [json.loads(line) for line in f]
 
 
 def _save_log(
