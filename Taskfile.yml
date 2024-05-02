@@ -78,7 +78,7 @@ tasks:
   volume-attach:
     desc: EC2インスタンスにボリュームをアタッチする。
     cmds:
-      - python src/volume_create.py -s={{.VOLUME_SIZE}} -d={{.DEVICE}} -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
+      - python src/volume_attach.py -s={{.VOLUME_SIZE}} -d={{.DEVICE}} -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
     vars:
       VOLUME_SIZE: '{{default "128" .VOLUME_SIZE}}'
       DEVICE: '{{default "/dev/sdf" .DEVICE}}'
