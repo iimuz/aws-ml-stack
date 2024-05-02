@@ -1,11 +1,4 @@
-"""開発用のEC2インスタンスを作成するときのスクリプト.
-
-利用例:
-
-```sh
-`python src/create_ec2_spot_instance.py --profile AWS_PROFILE
-```
-"""
+"""EC2のSSHコマンドを出力する."""
 
 import logging
 import sys
@@ -17,9 +10,7 @@ from pathlib import Path
 import boto3
 from pydantic import BaseModel, ConfigDict, Field
 
-from src.awscdk.stack_config import StackConfig
 from src.internal.ec2_spot_instance import SpotInstance
-from src.internal.stack_output import StackOutput
 
 _logger = logging.getLogger(__name__)
 
@@ -28,9 +19,6 @@ class _RunConfig(BaseModel):
     """スクリプト実行のためのオプション."""
 
     aws_profile: str = Field(description="AWS Profile.")
-
-    snapshot_id: str | None = Field(default=None, description="Snapshot ID.")
-    ssh_key_name: str = Field(default="ml-dev-key", description="SSH Key Name.")
 
     verbosity: int = Field(description="ログレベル.")
 
@@ -60,23 +48,17 @@ def _main() -> None:
     _setup_logger(log_filepath, loglevel=loglevel)
     _logger.info(config)
 
-    # CDKから情報を取得
-    stack_config = StackConfig.create_dev()
-    stack_output = StackOutput.load_from_stack(
-        config=stack_config, profile=config.aws_profile
-    )
-
-    # インスタンスの生成
-    _logger.info("Launching EC2 ...")
+    # インスタンス情報を取得してsshコマンドを出力
+    _logger.info("Get EC2 info ...")
     session = boto3.Session(profile_name=config.aws_profile)
     spot_instance = SpotInstance(session=session, log_dir=processed_dir)
-    spot_instance.request(
-        tag_name=stack_config.tag_name,
-        security_group_id=stack_output.security_group_id,
-        ssh_key_name=config.ssh_key_name,
-    )
-    spot_instance.wait_until_instance_running()
-    _logger.info(spot_instance.describe())
+    spot_instance.load_latest()
+    instance = spot_instance.describe()
+
+    public_ip = instance.get("PublicDnsName", "")
+    key_name = instance.get("KeyName", "")
+
+    _logger.info("ssh command: ssh -i ~/.ssh/%s.pem ubuntu@%s", key_name, public_ip)
 
 
 def _parse_args() -> _RunConfig:
@@ -84,9 +66,6 @@ def _parse_args() -> _RunConfig:
     parser = ArgumentParser(description="EC2インスタンスを生成する.")
 
     parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
-
-    parser.add_argument("-s", "--snapshot-id", help="Snpashot ID.")
-    parser.add_argument("-k", "--ssh-key-name", help="ssh key name for accessing EC2.")
 
     parser.add_argument(
         "-v",

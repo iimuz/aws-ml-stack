@@ -4,7 +4,10 @@ vars:
   PYTHON: '{{default "python" .PYTHON}}'
   VENV_DIR: '{{default ".venv" .VENV_DIR}}'
   AWS_PROFILE: '{{default "default" .AWS_PROFILE}}'
+  EC2_KEY_NAME: '{{default "ec2-key" .EC2_KEY_NAME}}'
 dotenv: [".env"]
+env:
+  PYTHONPATH: "{{.TASKFILE_DIR}}"
 
 tasks:
   # 初期環境構築用タスク
@@ -54,6 +57,19 @@ tasks:
     desc: Destroy.
     cmds:
       - npx cdk destroy --profile={{.AWS_PROFILE}}
+
+  ec2-request:
+    desc: Spot Request EC2インスタンスをリクエストする。
+    cmds:
+      - python src/create_ec2_spot_instance.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} {{.CLI_ARGS}}
+  ec2-ssh-command:
+    desc: 最新のEC2インスタンスにSSH接続するコマンドを表示する。
+    cmds:
+      - python src/ec2_ssh_command.py -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
+  ec2-terminate:
+    desc: 最新のSpot Request EC2インスタンスを削除する。
+    cmds:
+      - python src/ec2_terminate.py -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
 
   # requirements.txtの更新用タスク
   # 実行後に下記の修正を手動で実施する必要がある。

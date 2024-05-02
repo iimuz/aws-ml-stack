@@ -25,6 +25,7 @@
     "pydantic",
     "pyproject",
     "pytest",
+    "pythonpath",
     "pyyaml",
     "setuptools",
     "Taskfile",

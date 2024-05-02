@@ -1,4 +1,4 @@
-"""開発用のEC2インスタンスを作成するときのスクリプト.
+"""開発用のEC2インスタンスからスナップショットを作成するスクリプト.
 
 利用例:
 
@@ -7,8 +7,10 @@
 ```
 """
 
+import json
 import logging
 import sys
+import time
 from argparse import ArgumentParser
 from logging import Formatter, StreamHandler
 from logging.handlers import RotatingFileHandler
@@ -18,8 +20,7 @@ import boto3
 from pydantic import BaseModel, ConfigDict, Field
 
 from src.awscdk.stack_config import StackConfig
-from src.internal.ec2_spot_instance import SpotInstance
-from src.internal.stack_output import StackOutput
+from src.internal.datetime_encoder import DateTimeEncoder
 
 _logger = logging.getLogger(__name__)
 
@@ -29,8 +30,7 @@ class _RunConfig(BaseModel):
 
     aws_profile: str = Field(description="AWS Profile.")
 
-    snapshot_id: str | None = Field(default=None, description="Snapshot ID.")
-    ssh_key_name: str = Field(default="ml-dev-key", description="SSH Key Name.")
+    volume_id: str = Field(default=None, description="Volume ID.")
 
     verbosity: int = Field(description="ログレベル.")
 
@@ -45,7 +45,7 @@ def _main() -> None:
     # 作業ディレクトリの設定
     script_filepath = Path(__file__)
     data_dir = Path(__file__).parents[1] / "data"
-    processed_dir = data_dir / "processed"
+    processed_dir = data_dir / "processed" / script_filepath.stem
     processed_dir.mkdir(exist_ok=True)
 
     # ログ設定
@@ -62,31 +62,31 @@ def _main() -> None:
 
     # CDKから情報を取得
     stack_config = StackConfig.create_dev()
-    stack_output = StackOutput.load_from_stack(
-        config=stack_config, profile=config.aws_profile
+
+    # スナップショットの作成
+    _logger.info("Creating snapshot ...")
+    session = boto3.Session(profile_name=config.aws_profile)
+    ec2 = session.client("ec2")
+    description_message = f"{stack_config.stack_name}-ec2-snapshot"
+    snapshot = ec2.create_snapshot(
+        VolumeId=config.volume_id, Description=description_message
     )
 
-    # インスタンスの生成
-    _logger.info("Launching EC2 ...")
-    session = boto3.Session(profile_name=config.aws_profile)
-    spot_instance = SpotInstance(session=session, log_dir=processed_dir)
-    spot_instance.request(
-        tag_name=stack_config.tag_name,
-        security_group_id=stack_output.security_group_id,
-        ssh_key_name=config.ssh_key_name,
-    )
-    spot_instance.wait_until_instance_running()
-    _logger.info(spot_instance.describe())
+    # スナップショット情報の保存
+    datetime_str = time.strftime("%Y%m%d%H%M%S")
+    filepath = processed_dir / f"snapshot_{datetime_str}.json"
+    with filepath.open("w") as f:
+        json.dump(snapshot, f, cls=DateTimeEncoder, indent=2)
+    _logger.info("Save snapshot info: %s", filepath)
 
 
 def _parse_args() -> _RunConfig:
     """スクリプト実行のための引数を読み込む."""
     parser = ArgumentParser(description="EC2インスタンスを生成する.")
 
-    parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
+    parser.add_argument("volume_id", help="Volume ID.")
 
-    parser.add_argument("-s", "--snapshot-id", help="Snpashot ID.")
-    parser.add_argument("-k", "--ssh-key-name", help="ssh key name for accessing EC2.")
+    parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
 
     parser.add_argument(
         "-v",
