@@ -49,6 +49,7 @@ tasks:
       - dprint fmt
       - npx prettier --write "**/*.{yml,yaml}"
 
+  # CDK
   deploy:
     desc: Deploy.
     cmds:
@@ -58,6 +59,7 @@ tasks:
     cmds:
       - npx cdk destroy --profile={{.AWS_PROFILE}}
 
+  # EC2
   ec2-request:
     desc: Spot Request EC2インスタンスをリクエストする。
     cmds:
@@ -74,6 +76,7 @@ tasks:
     desc: 最新のSpot Request EC2インスタンスを削除する。
     cmds:
       - python src/ec2_terminate.py -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
+      - task: volume-delete
 
   volume-attach:
     desc: EC2インスタンスにボリュームをアタッチする。
@@ -82,6 +85,10 @@ tasks:
     vars:
       VOLUME_SIZE: '{{default "128" .VOLUME_SIZE}}'
       DEVICE: '{{default "/dev/sdf" .DEVICE}}'
+  volume-delete:
+    desc: ボリュームを削除する。
+    cmds:
+      - python src/volume_delete.py -p={{.AWS_PROFILE}} {{.CLI_ARGS}}
 
   # requirements.txtの更新用タスク
   # 実行後に下記の修正を手動で実施する必要がある。
