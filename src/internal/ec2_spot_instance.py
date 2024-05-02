@@ -47,6 +47,7 @@ class SpotInstance:
         instance_type = _get_instance_type()
         tag_specifications = _get_tag_specifications(tag_name)
         instance_market_options = _get_instance_market_options()
+        root_block_device = _get_root_block_device_mapping()
         block_device = _get_block_device_mapping()
         network_interface = _get_network_interface([security_group_id])
         metadata_options = _get_instance_metadata_options()
@@ -59,7 +60,7 @@ class SpotInstance:
             TagSpecifications=[tag_specifications],
             KeyName=ssh_key_name,
             InstanceMarketOptions=instance_market_options,
-            BlockDeviceMappings=[block_device],
+            BlockDeviceMappings=[root_block_device, block_device],
             NetworkInterfaces=[network_interface],
             MetadataOptions=metadata_options,
             PrivateDnsNameOptions=private_dns_name_options,
@@ -189,6 +190,20 @@ def _get_tag_specifications(tag_name: str) -> TagSpecificationTypeDef:
 
 def _get_block_device_mapping() -> BlockDeviceMappingTypeDef:
     """ブロックデバイスマッピングを取得する."""
+    return {
+        "DeviceName": "/dev/sdb",
+        "Ebs": {
+            "DeleteOnTermination": True,
+            "VolumeType": "gp3",
+            "VolumeSize": 128,
+            "Iops": 3000,
+            "Throughput": 125,
+        },
+    }
+
+
+def _get_root_block_device_mapping() -> BlockDeviceMappingTypeDef:
+    """ルートのブロックデバイスマッピングを取得する."""
     return {
         "DeviceName": "/dev/sda1",
         "Ebs": {
