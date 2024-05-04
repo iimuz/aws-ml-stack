@@ -20,7 +20,7 @@ sudo chmod -R 764 $MOUNT_POINT
 # CI=1: <https://github.com/Homebrew/install/issues/369#issuecomment-824250909>
 CI=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $HOME/.bashrc
-source $HOME/.bashrc
+set +eu && source $HOME/.bashrc && set -eu
 
 # 環境の構築
 pushd /data
@@ -28,7 +28,7 @@ pushd /data
     git clone https://github.com/iimuz/dotfiles.git
     pushd dotfiles
       bash setup.sh
-      source $HOME/.bashrc
+      set +eu && source $HOME/.bashrc && set -eu
       brew bundle install
     popd
   popd
