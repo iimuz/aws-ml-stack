@@ -37,8 +37,14 @@ class _InstanceType(Enum):
     T2_MICRO = "t2.micro"
     # 4 vCPU, 16GB RAM
     M5_XLARGE = "m5.xlarge"
-    # 4 vCPU, 16GB RAM, GPU 1(Tesla T4, 16GB VRAM)
-    G4DN_XLARGE = "g4dn.xlarge"
+
+    # g4dn (Tesla t4, 16GB VRAM)
+    G4DN_XLARGE = "g4dn.xlarge"  # 4 vCPU, 16GB RAM
+    G4DN_2XLARGE = "g4dn.2xlarge"  # 8 vCPU, 32GB RAM
+
+    # g5
+    G5_XLARGE = "g5.xlarge"  # 4 vCPU, 24GB RAM
+    G5_2XLARGE = "g5.2xlarge"  # 8 vCPU, 32GB RAM
 
 
 class _RunConfig(BaseModel):
