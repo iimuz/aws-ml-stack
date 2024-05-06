@@ -58,3 +58,8 @@ readonly JAVA_VERSION="openjdk.20.0.1"
 asdf plugin add java
 asdf install java $JAVA_VERSION
 asdf global java $JAVA_VERSION
+
+# 環境をzshに再設定
+pushd /data/src/github.com/iimuz/dotfiles
+  SHELL="$(which zsh)" bash setup.sh
+popd
