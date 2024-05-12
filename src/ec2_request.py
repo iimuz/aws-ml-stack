@@ -85,20 +85,19 @@ def _main() -> None:
     _setup_logger(log_filepath, loglevel=loglevel)
     _logger.info(config)
 
-    # CDKから情報を取得
-    stack_config = StackConfig.create_dev()
-    stack_output = StackOutput.load_from_stack(
-        config=stack_config, profile=config.aws_profile
-    )
     cdk_context = json.loads(Path("cdk.context.json").read_text())
-    aws_region = cdk_context.get("aws::cdk::region", None)
+    aws_region = cdk_context.get("aws:cdk:region", None)
     if aws_region is None:
         message = "cannot get AWS Region from CDK context."
         raise ValueError(message)
+    session = boto3.Session(profile_name=config.aws_profile, region_name=aws_region)
+
+    # CDKから情報を取得
+    stack_config = StackConfig.create_dev()
+    stack_output = StackOutput.load_from_stack(config=stack_config, session=session)
 
     # インスタンスの生成
     _logger.info("Launching EC2 ...")
-    session = boto3.Session(profile_name=config.aws_profile, region_name=aws_region)
     spot_instance = SpotInstance(session=session, log_dir=processed_dir)
     spot_instance.request(
         tag_name=stack_config.tag_name,

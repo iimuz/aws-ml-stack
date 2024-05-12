@@ -7,6 +7,7 @@
 ```
 """
 
+import json
 import logging
 import sys
 from argparse import ArgumentParser
@@ -55,9 +56,15 @@ def _main() -> None:
     _setup_logger(log_filepath, loglevel=loglevel)
     _logger.info(config)
 
+    cdk_context = json.loads(Path("cdk.context.json").read_text())
+    aws_region = cdk_context.get("aws:cdk:region", None)
+    if aws_region is None:
+        message = "cannot get AWS Region from CDK context."
+        raise ValueError(message)
+    session = boto3.Session(profile_name=config.aws_profile, region_name=aws_region)
+
     # インスタンスの削除
     _logger.info("Terminate EC2 ...")
-    session = boto3.Session(profile_name=config.aws_profile)
     spot_instance = SpotInstance(session=session, log_dir=processed_dir)
     spot_instance.load_latest()
     _logger.info("instance id: %s", spot_instance.instance_id)
