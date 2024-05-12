@@ -67,7 +67,11 @@ def _main() -> None:
     availability_zone = spot_instance.availability_zone
 
     volume = EC2Volume(session=session, log_dir=processed_dir)
-    volume.load_latest()
+    try:
+        volume.load_latest()
+    except FileNotFoundError as e:
+        _logger.warning(e)
+        _logger.warning("skip load latest data.")
     if volume.volume_id is None or volume.state != "available":
         volume.create(
             volume_size=config.volume_size, availability_zone=availability_zone
