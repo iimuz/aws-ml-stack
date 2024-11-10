@@ -109,6 +109,9 @@ tasks:
       - defer: git clean -fdx {{.VENV_DIR}}
       - '{{.PYTHON_VENV}} -m pip install -e ".[dev,test]"'
       - "{{.PYTHON_VENV}} -m pip freeze > requirements.txt"
+      - npm install aws-cdk@latest
+      - npm install cspell@latest
+      - npm install prettier@latest
     vars:
       VENV_DIR: .venv-temp
       PYTHON_VENV:
