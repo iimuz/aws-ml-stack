@@ -57,6 +57,10 @@ class _RunConfig(BaseModel):
         default=_InstanceType.T2_MICRO, description="Instance Type."
     )
 
+    tailscale_auth_key: str | None = Field(
+        default=None, description="tailscale authentication key."
+    )
+
     verbosity: int = Field(description="ログレベル.")
 
     model_config = ConfigDict(frozen=True)
@@ -104,6 +108,7 @@ def _main() -> None:
         security_group_id=stack_output.security_group_id,
         ssh_key_name=config.ssh_key_name,
         instance_type=config.instance_type.value,
+        tailscale_auth_key=config.tailscale_auth_key,
     )
     spot_instance.wait_until_instance_running()
     _logger.info(json.dumps(spot_instance.describe(), cls=DateTimeEncoder, indent=2))
@@ -122,6 +127,11 @@ def _parse_args() -> _RunConfig:
         default=_InstanceType.T2_MICRO,
         choices=[v.value for v in _InstanceType],
         help="Instance Type.",
+    )
+    parser.add_argument(
+        "--tailscale-auth-key",
+        default=None,
+        help="Tailscale authentication key.",
     )
 
     parser.add_argument(
