@@ -1,5 +1,6 @@
 """EC2のVolumeを削除するスクリプト."""
 
+import json
 import logging
 import sys
 from argparse import ArgumentParser
@@ -49,7 +50,12 @@ def _main() -> None:
     _logger.info(config)
 
     # EBS Volumeを削除する
-    session = boto3.Session(profile_name=config.aws_profile)
+    cdk_context = json.loads(Path("cdk.context.json").read_text())
+    aws_region = cdk_context.get("aws:cdk:region", None)
+    if aws_region is None:
+        message = "cannot get AWS Region from CDK context."
+        raise ValueError(message)
+    session = boto3.Session(profile_name=config.aws_profile, region_name=aws_region)
 
     volume = EC2Volume(session=session, log_dir=processed_dir)
     volume.load_latest()

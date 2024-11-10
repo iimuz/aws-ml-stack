@@ -37,8 +37,14 @@ class _InstanceType(Enum):
     T2_MICRO = "t2.micro"
     # 4 vCPU, 16GB RAM
     M5_XLARGE = "m5.xlarge"
-    # 4 vCPU, 16GB RAM, GPU 1(Tesla T4, 16GB VRAM)
-    G4DN_XLARGE = "g4dn.xlarge"
+
+    # g4dn (Tesla t4, 16GB VRAM)
+    G4DN_XLARGE = "g4dn.xlarge"  # 4 vCPU, 16GB RAM
+    G4DN_2XLARGE = "g4dn.2xlarge"  # 8 vCPU, 32GB RAM
+
+    # g5
+    G5_XLARGE = "g5.xlarge"  # 4 vCPU, 24GB RAM
+    G5_2XLARGE = "g5.2xlarge"  # 8 vCPU, 32GB RAM
 
 
 class _RunConfig(BaseModel):
@@ -79,15 +85,19 @@ def _main() -> None:
     _setup_logger(log_filepath, loglevel=loglevel)
     _logger.info(config)
 
+    cdk_context = json.loads(Path("cdk.context.json").read_text())
+    aws_region = cdk_context.get("aws:cdk:region", None)
+    if aws_region is None:
+        message = "cannot get AWS Region from CDK context."
+        raise ValueError(message)
+    session = boto3.Session(profile_name=config.aws_profile, region_name=aws_region)
+
     # CDKから情報を取得
     stack_config = StackConfig.create_dev()
-    stack_output = StackOutput.load_from_stack(
-        config=stack_config, profile=config.aws_profile
-    )
+    stack_output = StackOutput.load_from_stack(config=stack_config, session=session)
 
     # インスタンスの生成
     _logger.info("Launching EC2 ...")
-    session = boto3.Session(profile_name=config.aws_profile)
     spot_instance = SpotInstance(session=session, log_dir=processed_dir)
     spot_instance.request(
         tag_name=stack_config.tag_name,

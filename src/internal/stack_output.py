@@ -1,6 +1,6 @@
 """AWS CDKのStack outputを管理するクラス."""
 
-import boto3
+from boto3 import Session
 from mypy_boto3_cloudformation.type_defs import OutputTypeDef
 from pydantic import BaseModel, ConfigDict
 
@@ -16,9 +16,8 @@ class StackOutput(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     @staticmethod
-    def load_from_stack(config: StackConfig, profile: str) -> "StackOutput":
+    def load_from_stack(config: StackConfig, session: Session) -> "StackOutput":
         """Stackからoutputを取得する."""
-        session = boto3.Session(profile_name=profile)
         cloudformation = session.client("cloudformation")
         response = cloudformation.describe_stacks(StackName=config.stack_name)
         stack = response["Stacks"][0]
