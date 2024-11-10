@@ -177,8 +177,13 @@ class SpotInstance:
 
 def _get_ami() -> str:
     """AMIのIDを取得する."""
-    # Deep Learning Base Ubuntu20.04(cuda driver and docker installed)
-    return "ami-08b9a877bc0de2016"
+    # tokyo: Deep Learning Base Ubuntu22.04(cuda driver and docker installed)
+    # return "ami-07752588c69983b3c"
+    # osaka: Deep Learning Base Ubuntu22.04(cuda driver and docker installed)
+    return "ami-0318ac729728cae04"
+    # osaka: Deep Learning Ubuntu20.04(pytorch 2.2.0)
+    # nvccがbase amiには含まれていないためpytorch入りを利用する。
+    # return "ami-0b57109eadd0135a1"
 
 
 def _get_tag_specifications(tag_name: str) -> TagSpecificationTypeDef:
@@ -194,7 +199,7 @@ def _get_block_device_mapping() -> BlockDeviceMappingTypeDef:
     return {
         "DeviceName": "/dev/sda1",
         "Ebs": {
-            "SnapshotId": "snap-0eb5dd914ea8dae65",  # DL ami ubuntu20.04
+            # "SnapshotId": "snap-0eb5dd914ea8dae65",  # DL ami ubuntu20.04
             "DeleteOnTermination": True,
             "VolumeType": "gp3",
             "VolumeSize": 128,

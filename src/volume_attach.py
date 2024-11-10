@@ -55,14 +55,23 @@ def _main() -> None:
     _logger.info(config)
 
     # EBS Volumeを作成もしくは既存のVolumeをEC2インスタンスにアタッチする
-    session = boto3.Session(profile_name=config.aws_profile)
+    cdk_context = json.loads(Path("cdk.context.json").read_text())
+    aws_region = cdk_context.get("aws:cdk:region", None)
+    if aws_region is None:
+        message = "cannot get AWS Region from CDK context."
+        raise ValueError(message)
+    session = boto3.Session(profile_name=config.aws_profile, region_name=aws_region)
 
     spot_instance = SpotInstance(session=session, log_dir=processed_dir)
     spot_instance.load_latest()
     availability_zone = spot_instance.availability_zone
 
     volume = EC2Volume(session=session, log_dir=processed_dir)
-    volume.load_latest()
+    try:
+        volume.load_latest()
+    except FileNotFoundError as e:
+        _logger.warning(e)
+        _logger.warning("skip load latest data.")
     if volume.volume_id is None or volume.state != "available":
         volume.create(
             volume_size=config.volume_size, availability_zone=availability_zone

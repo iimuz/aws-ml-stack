@@ -21,6 +21,7 @@ sudo chmod -R 764 $MOUNT_POINT
 CI=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $HOME/.bashrc
 set +eu && source $HOME/.bashrc && set -eu
+eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 # 環境の構築
 pushd /data
@@ -60,6 +61,8 @@ asdf install java $JAVA_VERSION
 asdf global java $JAVA_VERSION
 
 # 環境をzshに再設定
+echo "source /etc/profile.d/dlami.sh" >> $HOME/.zshrc  # DL AMIを利用する場合にnvccなどにパスを通す
+
 pushd /data/src/github.com/iimuz/dotfiles
   SHELL="$(which zsh)" bash setup.sh
 popd
