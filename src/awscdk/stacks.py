@@ -45,13 +45,14 @@ class MLStack(cdk.Stack):
             self,
             stack_config.ssh_security_group_name,
             vpc=vpc,
-            description="Allow SSH access from your IP address.",
+            # description="Allow SSH access from your IP address.",
+            description="Deny all inbound traffic and allow all outbound traffic.",
             allow_all_outbound=True,
         )
-        ip_address = _get_amazon_global_ip()
-        sg.add_ingress_rule(
-            ec2.Peer.ipv4(ip_address), ec2.Port.tcp(22), "Allow SSH access."
-        )
+        # ip_address = _get_amazon_global_ip()
+        # sg.add_ingress_rule(
+        #     ec2.Peer.ipv4(ip_address), ec2.Port.tcp(22), "Allow SSH access."
+        # )
         cdk.CfnOutput(
             self,
             StackOutputKey.security_group_id.value,
