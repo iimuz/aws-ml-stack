@@ -22,3 +22,14 @@ CI=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/insta
 echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $HOME/.bashrc
 set +eu && source $HOME/.bashrc && set -eu
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
+
+# 環境の構築
+pushd /data
+  mkdir -p src/github.com/iimuz && pushd $_
+    git clone https://github.com/iimuz/dotfiles.git
+    pushd dotfiles
+      bash setup.sh
+    popd
+  popd
+popd
+ln -s /data/src

@@ -5,15 +5,8 @@ set -eu
 set -o pipefail
 
 # 環境の構築
-pushd /data
-  mkdir -p src/github.com/iimuz && pushd $_
-    git clone https://github.com/iimuz/dotfiles.git
-    pushd dotfiles
-      bash setup.sh
-      set +eu && source $HOME/.bashrc && set -eu
-      brew bundle install
-    popd
-  popd
+pushd /data/src/github.com/iimuz/dotfiles
+  brew bundle install
 popd
 ln -s /data/src
 
