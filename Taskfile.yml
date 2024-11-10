@@ -63,11 +63,16 @@ tasks:
   ec2-request:
     desc: Spot Request EC2インスタンスをリクエストする。
     cmds:
-      - python src/ec2_request.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} -t={{.INSTANCE_TYPE}} {{.CLI_ARGS}}
+      - |
+        if [[ -n "{{.TAILSCALE_AUTH_KEY}}" ]]; then
+          tailscale="--tailscale-auth-key={{.TAILSCALE_AUTH_KEY}}"
+        fi
+        python src/ec2_request.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} -t={{.INSTANCE_TYPE}} $tailscale {{.CLI_ARGS}}
       - task: volume-attach
       - task: ec2-ssh-command
     vars:
       INSTANCE_TYPE: '{{default "m5.xlarge" .INSTANCE_TYPE}}'
+      TAILSCALE_AUTH_KEY: "{{default .TAILSCALE_AUTH_KEY}}"
   ec2-ssh-command:
     desc: 最新のEC2インスタンスにSSH接続するコマンドを表示する。
     cmds:
