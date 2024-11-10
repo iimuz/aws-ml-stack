@@ -33,6 +33,7 @@ class SpotInstance:
         self._log_dir = log_dir / "spot_instance"
 
         self._log_dir.mkdir(exist_ok=True)
+        self._region_name = session.region_name
 
     def request(
         self: "SpotInstance",
@@ -43,7 +44,7 @@ class SpotInstance:
         tailscale_auth_key: str | None = None,
     ) -> None:
         """スポットインスタンスのリクエストを行う."""
-        ami = _get_ami()
+        ami = _get_ami(region_name=self._region_name, instance_type=instance_type)
         tag_specifications = _get_tag_specifications(tag_name)
         instance_market_options = _get_instance_market_options()
         block_device = _get_block_device_mapping()
@@ -188,17 +189,28 @@ class SpotInstance:
         return meta.get("Placement", {}).get("AvailabilityZone", "")
 
 
-def _get_ami() -> str:
-    """AMIのIDを取得する."""
-    # tokyo: Deep Learning Base Ubuntu22.04(cuda driver and docker installed) x86
-    return "ami-07765371e04174613"
-    # tokyo: Deep Learning Base Ubuntu22.04(cuda driver and docker installed) arm64
-    # return "ami-039b03b236ec4a653"
-    # osaka: Deep Learning Base Ubuntu22.04(cuda driver and docker installed)
-    # return "ami-0318ac729728cae04"
-    # osaka: Deep Learning Ubuntu20.04(pytorch 2.2.0)
-    # nvccがbase amiには含まれていないためpytorch入りを利用する。
-    # return "ami-0b57109eadd0135a1"
+def _get_ami(region_name: str, instance_type: InstanceTypeType) -> str:
+    """AMIのIDを取得する.
+
+    Notes:
+    - nvccが必要な場合は、base amiには含まれていないためpytorch入りを利用する。
+
+    """
+    # Deep Learning Base Ubuntu22.04(cuda driver and docker installed) x86
+    ami_default = {
+        "ap-northeast-1": "ami-07765371e04174613",
+        "ap-northeast-3": "ami-0318ac729728cae04",
+    }
+    # Deep Learning Base Ubuntu22.04(cuda driver and docker installed) arm64
+    ami_graviton = {
+        "ap-northeast-1": "ami-039b03b236ec4a653",
+    }
+
+    cpu_type = instance_type.split(".")[0][-1].lower()
+    if cpu_type == "g":
+        return ami_graviton.get(region_name, ami_default.get(region_name, ""))
+
+    return ami_default.get(region_name, "")
 
 
 def _get_tag_specifications(tag_name: str) -> TagSpecificationTypeDef:
@@ -214,7 +226,6 @@ def _get_block_device_mapping() -> BlockDeviceMappingTypeDef:
     return {
         "DeviceName": "/dev/sda1",
         "Ebs": {
-            # "SnapshotId": "snap-0eb5dd914ea8dae65",  # DL ami ubuntu20.04
             "DeleteOnTermination": True,
             "VolumeType": "gp3",
             "VolumeSize": 128,
