@@ -4,7 +4,6 @@ vars:
   PYTHON: '{{default "python" .PYTHON}}'
   VENV_DIR: '{{default ".venv" .VENV_DIR}}'
   AWS_PROFILE: '{{default "default" .AWS_PROFILE}}'
-  EC2_KEY_NAME: '{{default "ec2-key" .EC2_KEY_NAME}}'
 dotenv: [".env"]
 env:
   PYTHONPATH: "{{.TASKFILE_DIR}}"
@@ -67,12 +66,16 @@ tasks:
         if [[ -n "{{.TAILSCALE_AUTH_KEY}}" ]]; then
           tailscale="--tailscale-auth-key={{.TAILSCALE_AUTH_KEY}}"
         fi
-        python src/ec2_request.py -p={{.AWS_PROFILE}} -k={{.EC2_KEY_NAME}} -t={{.INSTANCE_TYPE}} $tailscale {{.CLI_ARGS}}
+        if [[ -n "{{.EC2_KEY_NAME}}" ]]; then
+          key_name="-k={{.EC2_KEY_NAME}}"
+        fi
+        python src/ec2_request.py -p={{.AWS_PROFILE}} -t={{.INSTANCE_TYPE}} $key_name $tailscale {{.CLI_ARGS}}
       - task: volume-attach
       - task: ec2-ssh-command
     vars:
       INSTANCE_TYPE: '{{default "m5.xlarge" .INSTANCE_TYPE}}'
-      TAILSCALE_AUTH_KEY: "{{default .TAILSCALE_AUTH_KEY}}"
+      EC2_KEY_NAME: '{{default "" .EC2_KEY_NAME}}'
+      TAILSCALE_AUTH_KEY: '{{default "" .TAILSCALE_AUTH_KEY}}'
   ec2-ssh-command:
     desc: 最新のEC2インスタンスにSSH接続するコマンドを表示する。
     cmds:

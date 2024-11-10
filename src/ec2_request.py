@@ -33,10 +33,10 @@ class _InstanceType(Enum):
     ここに記載しているインスタンスタイプは、利用することが多いものを記載している。
     """
 
-    # Free tier
-    T2_MICRO = "t2.micro"
-    # 4 vCPU, 16GB RAM
-    M5_XLARGE = "m5.xlarge"
+    T2_MICRO = "t2.micro"  # Free tier
+    M5_LARGE = "m5.large"  # 2 vCPU, 8GB RAM
+    M5_XLARGE = "m5.xlarge"  # 4 vCPU, 16GB RAM
+    M7_LARGE = "m7g.large"  # 2 vCPU, 8GB RAM, Graviton
 
     # g4dn (Tesla t4, 16GB VRAM)
     G4DN_XLARGE = "g4dn.xlarge"  # 4 vCPU, 16GB RAM
@@ -52,7 +52,7 @@ class _RunConfig(BaseModel):
 
     aws_profile: str = Field(description="AWS Profile.")
 
-    ssh_key_name: str = Field(default="ml-dev-key", description="SSH Key Name.")
+    ssh_key_name: str | None = Field(default=None, description="SSH Key Name.")
     instance_type: _InstanceType = Field(
         default=_InstanceType.T2_MICRO, description="Instance Type."
     )
@@ -120,7 +120,9 @@ def _parse_args() -> _RunConfig:
 
     parser.add_argument("-p", "--aws-profile", help="AWS Profile.")
 
-    parser.add_argument("-k", "--ssh-key-name", help="ssh key name for accessing EC2.")
+    parser.add_argument(
+        "-k", "--ssh-key-name", default=None, help="ssh key name for accessing EC2."
+    )
     parser.add_argument(
         "-t",
         "--instance-type",

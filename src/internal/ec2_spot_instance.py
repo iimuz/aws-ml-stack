@@ -38,8 +38,8 @@ class SpotInstance:
         self: "SpotInstance",
         tag_name: str,
         security_group_id: str,
-        ssh_key_name: str,
         instance_type: InstanceTypeType = "t2.micro",
+        ssh_key_name: str | None = None,
         tailscale_auth_key: str | None = None,
     ) -> None:
         """スポットインスタンスのリクエストを行う."""
@@ -54,24 +54,25 @@ class SpotInstance:
         user_data = UserData.for_linux()
         if tailscale_auth_key is not None:
             user_data.add_commands(
-                "curl -fsSL https://tailscale.com/install.sh | sh",
-                f"sudo tailscale up --auth-key={tailscale_auth_key} --hostname=aws-ec2-ml-dev --ssh",
+                *_get_tailscale_setup_commands(tailscale_auth_key),
             )
-            print(user_data.render())
 
+        options = {}
+        if ssh_key_name is not None:
+            options["KeyName"] = ssh_key_name
         response = self._ec2.run_instances(
             ImageId=ami,
             MaxCount=1,
             MinCount=1,
             InstanceType=instance_type,
             TagSpecifications=[tag_specifications],
-            KeyName=ssh_key_name,
             InstanceMarketOptions=instance_market_options,
             BlockDeviceMappings=[block_device],
             NetworkInterfaces=[network_interface],
             MetadataOptions=metadata_options,
             PrivateDnsNameOptions=private_dns_name_options,
             UserData=user_data.render(),
+            **options,
         )
 
         instance = response["Instances"][0]
@@ -191,6 +192,8 @@ def _get_ami() -> str:
     """AMIのIDを取得する."""
     # tokyo: Deep Learning Base Ubuntu22.04(cuda driver and docker installed) x86
     return "ami-07765371e04174613"
+    # tokyo: Deep Learning Base Ubuntu22.04(cuda driver and docker installed) arm64
+    # return "ami-039b03b236ec4a653"
     # osaka: Deep Learning Base Ubuntu22.04(cuda driver and docker installed)
     # return "ami-0318ac729728cae04"
     # osaka: Deep Learning Ubuntu20.04(pytorch 2.2.0)
@@ -256,6 +259,18 @@ def _get_private_dns_name_options() -> PrivateDnsNameOptionsRequestTypeDef:
         "EnableResourceNameDnsARecord": True,
         "EnableResourceNameDnsAAAARecord": False,
     }
+
+
+def _get_tailscale_setup_commands(tailscale_auth_key: str) -> list[str]:
+    """Tailscaleのセットアップコマンドを取得する."""
+    return [
+        "curl -fsSL https://tailscale.com/install.sh | sh",
+        (
+            "sudo tailscale up"
+            " --hostname=aws-ec2-ml-dev --ssh"
+            f" --auth-key={tailscale_auth_key}"
+        ),
+    ]
 
 
 def _load_log(filepath: Path) -> list[dict]:
